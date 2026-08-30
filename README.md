@@ -45,18 +45,76 @@ section of `mac-analysis.md` says what carries over and what will differ.
 
 ## Demos
 
-`videos/*.webm` — scrubbable, pausable, and they **end** rather than loop.
-`gifs/*.gif` — the same takes as single-play GIFs for inline embedding.
+Five recordings, each in two forms:
 
-| | |
-|---|---|
-| `01-install` | unpacking the `.tgz`, requirements, `helptags`, first `:AIInfo` |
-| `02-configure` | providers, `:AIUrl`, `:AISet` and the literal-value trap |
-| `03-models` | `just models`, `:AIModels` local and remote, cursor-select |
-| `04-providers` | three backends — local ollama, local llama.cpp, remote ollama |
-| `05-chat` | `:AIQuery`, then `\c` / `\s` multi-turn chat |
+* **`videos/*.webm`** — the deliverable. Scrubbable, pausable, and they
+  **end** rather than loop. GitHub will not play these inline, so click
+  through to view or download one.
+* **`gifs/*.gif`** — the same takes, embedded below. These are built
+  **without** the GIF loop extension, so each plays through once and
+  stops on its last frame. Collapse and re-expand a section to replay it,
+  or open the `.webm` if you want to scrub.
 
-Re-record with `just videos` (needs `just install-tools` first).
+Total: about 112 seconds across all five. Dead air is trimmed
+automatically — see [`scripts/render-videos.sh`](scripts/render-videos.sh).
+
+<details>
+<summary><b>01 · Install</b> — unpacking the <code>.tgz</code>, requirements, <code>helptags</code>, first <code>:AIInfo</code> (35s)</summary>
+
+Installs into a throwaway vimdir, never the viewer's real `~/.vim`.
+
+![Installing vimgem from the distribution tarball](gifs/01-install.gif)
+
+[`videos/01-install.webm`](videos/01-install.webm)
+</details>
+
+<details>
+<summary><b>02 · Configure</b> — providers, <code>:AIUrl</code>, and the <code>:AISet</code> literal-value trap (12s)</summary>
+
+`gemini`, `claude`, and `openai` — where `openai` means *any*
+OpenAI-compatible server, local ones included.
+
+![Configuring vimgem for a local model server](gifs/02-configure.gif)
+
+[`videos/02-configure.webm`](videos/02-configure.webm)
+</details>
+
+<details>
+<summary><b>03 · Models</b> — <code>just models</code>, <code>:AIModels</code> local and remote, cursor-select (18s)</summary>
+
+Listing models from the shell and from inside Vim, then switching by
+putting the cursor on a model line and running `:AIModel`.
+
+![Listing models and switching between them](gifs/03-models.gif)
+
+[`videos/03-models.webm`](videos/03-models.webm)
+</details>
+
+<details>
+<summary><b>04 · Providers</b> — three backends: local ollama, local llama.cpp, remote ollama (21s)</summary>
+
+The point of this one: every local server is the *same* vimgem provider
+(`openai`). Switching backend is a base-URL change and nothing else —
+including to another machine on the LAN.
+
+![Switching between local and remote backends](gifs/04-providers.gif)
+
+[`videos/04-providers.webm`](videos/04-providers.webm)
+</details>
+
+<details>
+<summary><b>05 · Chat</b> — <code>:AIQuery</code>, then <code>\c</code> / <code>\s</code> multi-turn chat (25s)</summary>
+
+A one-shot query, then a persistent multi-turn conversation against a
+real local model.
+
+![A one-shot query and a multi-turn chat](gifs/05-chat.gif)
+
+[`videos/05-chat.webm`](videos/05-chat.webm)
+</details>
+
+Re-record everything with `just videos`, or one with `just video 03-models`
+(needs `just install-tools` first).
 
 ## Layout
 

@@ -119,7 +119,7 @@ tap_summary() {
     local ok not_ok skip
     local todo
     ok=$(grep -c '^ok '     "$f" 2>/dev/null || true)
-    # A "not ok" carrying "# TODO" is a known, filed defect: reported,
+    # A "not ok" carrying "# TODO" is a known, documented defect,
     # but deliberately not counted as a suite failure. See harness.vim Todo().
     not_ok=$(grep '^not ok ' "$f" 2>/dev/null | grep -vc '# TODO' || true)
     todo=$(grep -c '# TODO'  "$f" 2>/dev/null || true)

@@ -203,8 +203,10 @@ figures from `mac-analysis.md`; retune for a slower model.
 
 ## 6. What testing has already found
 
-Three defects, all reproducible, none previously documented. Reproduce
-with `just test-one 090-known-issues` and `just test-interactive`.
+Four defects are reproduced and maintained in
+[`vimgem-issues.md`](vimgem-issues.md), including severity, evidence,
+suggested fixes, and upstream status. Reproduce them with
+`just test-one 090-known-issues` and `just test-interactive`.
 
 ### Issue 1 — chat session IDs collide, silently destroying history
 

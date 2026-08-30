@@ -1,6 +1,6 @@
 vim9script
 # 090-known-issues: executable reproductions of defects found by this
-# suite and reported upstream. Every assertion here is marked TODO, so
+# suite and prepared for upstream reporting. Every assertion here is marked TODO, so
 # the file documents the bug and runs green -- but the moment one starts
 # PASSING, TAP flags it as unexpectedly-passing and you know the fix
 # landed and the marker can come off.

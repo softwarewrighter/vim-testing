@@ -64,7 +64,7 @@ enddef
 # reported in TAP as a TODO, so a failure does not redden the suite -- but
 # if it ever starts passing, TAP consumers flag it as unexpectedly-passing
 # and you know the bug is fixed and the marker can come off.
-# Use this only for defects filed upstream, with the issue noted in `why`.
+# Use this only for documented defects, with the issue noted in `why`.
 export def Todo(cond: bool, name: string, why: string)
     count += 1
     var status = cond ? 'ok' : 'not ok'

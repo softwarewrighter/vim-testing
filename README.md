@@ -36,6 +36,7 @@ your `~/.vim` back even if the tests fail or you interrupt it.
 | | |
 |---|---|
 | [`docs/test-plan.md`](docs/test-plan.md) | how testing works, what's covered, **and the four defects found so far** |
+| [`docs/vimgem-issues.md`](docs/vimgem-issues.md) | the four reproduced vimgem defects and their upstream status |
 | [`docs/install-and-configure.md`](docs/install-and-configure.md) | installing from the `.tgz`; configuring each provider |
 | [`docs/providers.md`](docs/providers.md) | per-backend setup: ollama, llama.cpp, vLLM, FreeToken, remote, cloud |
 | [`docs/mac-analysis.md`](docs/mac-analysis.md) | **benchmarks: which local model to actually use on Apple silicon** |
@@ -143,9 +144,9 @@ Re-record everything with `just videos`, or one with
 `just test-ollama` and `just test-remote` pass against live models.
 `just test-interactive` adds 4 more via a real PTY.
 
-Four defects found so far, all with executable reproductions in
-`vim/t/090-known-issues.vim` and written up in
-[`docs/test-plan.md`](docs/test-plan.md):
+Four defects found so far, with executable reproductions in
+`vim/t/090-known-issues.vim` and `scripts/interactive.exp`, are written up in
+[`docs/vimgem-issues.md`](docs/vimgem-issues.md):
 
 1. **Chat session IDs collide within one second, silently wiping the
    older session's history** (data loss).
@@ -156,7 +157,8 @@ Four defects found so far, all with executable reproductions in
 4. A config value cannot be cleared once set, which matters because an
    empty `g:openai_model` is the correct shape for single-model servers.
 
-These are for upstream; nothing here patches the plugin.
+These are prepared for upstream reporting; no upstream issue references are
+currently recorded. Nothing here patches the plugin.
 
 ## Copyright and license
 

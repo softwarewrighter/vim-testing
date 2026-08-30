@@ -41,8 +41,8 @@ proc ok {name cond} {
     }
 }
 
-# Same TODO convention as the batch harness: a known, filed defect is
-# reported but does not redden the run.
+# Same TODO convention as the batch harness: a known, documented defect
+# does not redden the run.
 proc todo {name cond why} {
     global count
     incr count

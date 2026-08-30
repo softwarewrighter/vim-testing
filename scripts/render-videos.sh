@@ -34,9 +34,14 @@ VID_DIR="$TESTING_DIR/videos"
 GIF_DIR="$TESTING_DIR/gifs"
 mkdir -p "$RAW_DIR" "$VID_DIR" "$GIF_DIR"
 
-# Longest a static screen may remain, in seconds. Long enough to read a
-# buffer, short enough that waiting for a model is not tedious.
-STATIC_CAP="${STATIC_CAP:-2.5}"
+# Longest a static screen may remain, in seconds.
+#
+# Must sit ABOVE the longest intentional read pause in the tapes (22s --
+# see vhs/_common.tape) so those survive untouched, and below the
+# model-wait upper bounds (25-35s) so their leftover is collapsed. The
+# trim only ever SHORTENS a pause; it can never speed one up below the
+# cap.
+STATIC_CAP="${STATIC_CAP:-16}"
 # GIF width; the webm keeps VHS's full resolution.
 GIF_WIDTH="${GIF_WIDTH:-1000}"
 
@@ -70,18 +75,15 @@ for tape in "${tapes[@]}"; do
         continue
     fi
 
-    fps=$(ffprobe -v error -select_streams v:0 -show_entries stream=r_frame_rate \
-          -of csv=p=0 "$raw" | awk -F/ '{printf "%d", ($2?$1/$2:$1)}')
-    [ "${fps:-0}" -gt 0 ] || fps=25
-    maxdrop=$(python3 -c "print(int($fps * $STATIC_CAP))")
-
     before=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$raw")
 
     # --- the deliverable: trimmed webm ---------------------------------
-    ffmpeg -y -loglevel error -i "$raw" \
-        -vf "mpdecimate=max=$maxdrop,setpts=N/FRAME_RATE/TB" -r "$fps" \
-        -c:v libvpx-vp9 -b:v 0 -crf 32 -row-mt 1 -an \
-        "$VID_DIR/$name.webm" || { fail "$name: webm encode failed"; rc=1; continue; }
+    # NOT mpdecimate: its `max` caps consecutive DROPS, so a bigger value
+    # is more aggressive and long pauses collapse to a couple of frames.
+    # trim_static.py measures real static runs and truncates each to the
+    # cap. See its docstring.
+    python3 ./trim_static.py "$raw" "$VID_DIR/$name.webm" --cap "$STATIC_CAP" \
+        || { fail "$name: trim/encode failed"; rc=1; continue; }
 
     # --- the same take as a GIF that PLAYS ONCE ------------------------
     # -loop -1 omits the NETSCAPE2.0 application extension entirely, so

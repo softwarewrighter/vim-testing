@@ -1,6 +1,6 @@
 # vimgem issues discovered by this test suite
 
-These four defects were reproduced against vimgem 0.1.260827. The
+These five defects were reproduced against vimgem 0.1.260827. The
 plugin is distributed separately and is not modified by this repository.
 
 There are currently no upstream issue URLs, issue numbers, acknowledgements,
@@ -95,6 +95,45 @@ interface.
 
 **Suggested fix:** Support an explicit empty value or add an `:AIUnset`
 command.
+
+**Status:** Reproduced against 0.1.260827; no upstream issue or fixed build is
+recorded.
+
+## Issue 5 — reasoning models' output is discarded, silently or misleadingly
+
+**Severity: medium — a blank buffer or a wrong error, with no way to tell
+which happened.**
+
+Thinking models return their chain of thought in
+`message.reasoning_content`, separate from `message.content`.
+`autoload/ai/openai.vim` `ExtractResult` reads only `message.content`.
+
+Omitting the chain of thought from the display is a defensible choice on its
+own. The problem is what happens when the model puts little or nothing in
+`content`, which is exactly what a reasoning model does when it exhausts its
+token budget while still thinking:
+
+| Server response | vimgem's behavior |
+|---|---|
+| `reasoning_content` set, `content: ""` | returns `{ok: true, text: ''}`: a blank buffer and no error |
+| `reasoning_content` set, no `content` key | reports `Received an empty or malformed response from the API` |
+
+The second message is incorrect. The server responded successfully and the
+response was neither empty nor malformed.
+
+This compounds the latency cost recorded in `mac-analysis.md`, where a
+reasoning model emitted 4051 tokens for a 400-word request and took just under
+two minutes with Vim frozen throughout. The user waits for every one of those
+tokens, is shown none of them, and is told nothing useful about why.
+
+Both shapes are reproduced by the mock server's `!reasoning` and
+`!reasoning-only` directives, with two TODO assertions in
+`vim/t/090-known-issues.vim`.
+
+**Suggested fix:** When `content` is empty or absent, fall back to
+`reasoning_content`, either surfacing it under a clear label or reporting that
+the model returned only reasoning content, rather than claiming a malformed
+response.
 
 **Status:** Reproduced against 0.1.260827; no upstream issue or fixed build is
 recorded.

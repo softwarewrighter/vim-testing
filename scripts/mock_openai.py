@@ -35,6 +35,10 @@ The response is chosen by scanning the last user message for a directive:
                         resent, which is the core :AIChatSend contract
     !dump               reply with the whole received message list as
                         role:text pairs, one per line
+    !reasoning          a thinking model's shape: reasoning_content full,
+                        content present but EMPTY
+    !reasoning-only     a thinking model that spent every token thinking:
+                        reasoning_content full, no content key at all
 
 Anything else echoes back "mock: <the prompt>".
 
@@ -66,7 +70,7 @@ def parse_directive(text):
         head, _, rest = line[1:].partition(" ")
         if head in (
             "echo", "truncate", "status", "apierror", "badjson", "slow",
-            "count", "dump",
+            "count", "dump", "reasoning", "reasoning-only",
         ):
             return head, rest.strip()
     return None, None
@@ -170,6 +174,28 @@ class Handler(BaseHTTPRequestHandler):
         else:
             content, finish = f"mock: {last_user}", "stop"
 
+        # Reasoning models (llama.cpp with a thinking model, and others)
+        # return their chain of thought in a separate reasoning_content
+        # field. Two shapes are worth reproducing: content present but
+        # empty, and content missing entirely. vimgem reads only
+        # message.content, so these are where it goes wrong -- see
+        # Issue 5 in docs/test-plan.md.
+        message = {"role": "assistant"}
+        if kind == "reasoning":
+            message["reasoning_content"] = (
+                "Let me think. The user asked a question. I will consider "
+                "several approaches before answering."
+            )
+            message["content"] = ""
+            finish = "length"
+        elif kind == "reasoning-only":
+            message["reasoning_content"] = (
+                "Thinking at length and never reaching a final answer."
+            )
+            finish = "length"
+        else:
+            message["content"] = content
+
         self._json(200, {
             "id": "chatcmpl-mock",
             "object": "chat.completion",
@@ -177,7 +203,7 @@ class Handler(BaseHTTPRequestHandler):
             "model": payload.get("model", "mock-model"),
             "choices": [{
                 "index": 0,
-                "message": {"role": "assistant", "content": content},
+                "message": message,
                 "finish_reason": finish,
             }],
             "usage": {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0},

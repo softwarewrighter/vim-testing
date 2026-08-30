@@ -195,8 +195,11 @@ for f in "${FILES[@]}"; do
 done
 
 # The shell half of 080-wire: assert on the mock's request log. Only
-# meaningful against the mock, which is the only backend that logs.
-if [ "$BACKEND" = mock ] && [ -s "${MOCK_LOG:-}" ]; then
+# meaningful against the mock (the only backend that logs) AND only on a
+# full run -- these assertions need the variety of requests the whole
+# suite makes, so a filtered run would fail them for the wrong reason.
+if [ "$BACKEND" = mock ] && [ -z "$FILTER" ] && [ "$OFFLINE" -eq 0 ] \
+   && [ -s "${MOCK_LOG:-}" ]; then
     wire_tap="$RUN_DIR/wire.tap"
     if ./assert-wire.sh "$MOCK_LOG" >"$wire_tap" 2>&1; then
         pass "wire-shape -- $(tap_summary "$wire_tap")"

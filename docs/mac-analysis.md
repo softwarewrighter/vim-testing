@@ -83,6 +83,11 @@ it reasons about the word OK first.
 > plugin streams, or learns to surface `reasoning_content`, the thinking
 > tokens are pure latency. Prefer instruct/coder tunes, or run the
 > reasoning model with thinking disabled if the server supports it.
+>
+> This is filed as **Issue 5** in `test-plan.md`: it is not only wasted
+> latency. When such a model puts little or nothing in `content`, vimgem
+> shows a blank buffer or reports "empty or malformed response" — an
+> error the server did not cause.
 
 ---
 

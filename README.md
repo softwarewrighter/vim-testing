@@ -140,11 +140,11 @@ Re-record everything with `just videos`, or one with
 
 ## Status
 
-`just test` — **89 assertions passing, 3 TODO** against known defects.
+`just test` — **96 assertions passing, 5 TODO** against known defects.
 `just test-ollama` and `just test-remote` pass against live models.
 `just test-interactive` adds 4 more via a real PTY.
 
-Four defects found so far, with executable reproductions in
+Five defects found so far, with executable reproductions in
 `vim/t/090-known-issues.vim` and `scripts/interactive.exp`, are written up in
 [`docs/vimgem-issues.md`](docs/vimgem-issues.md):
 
@@ -156,6 +156,9 @@ Four defects found so far, with executable reproductions in
    a real terminal.
 4. A config value cannot be cleared once set, which matters because an
    empty `g:openai_model` is the correct shape for single-model servers.
+5. **Reasoning models' output is discarded**: their answer arrives in
+   `reasoning_content`, which vimgem never reads, so the user gets a
+   blank buffer or a wrong "malformed response" error.
 
 These are prepared for upstream reporting; no upstream issue references are
 currently recorded. Nothing here patches the plugin.

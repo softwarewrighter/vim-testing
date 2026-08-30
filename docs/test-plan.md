@@ -4,8 +4,8 @@ How this plugin gets tested, what each layer is for, and what testing has
 already turned up.
 
 Everything described here is implemented and running. `just test` is
-green today: **89 assertions passing, 3 marked TODO** against two real
-defects (§6). `just test-ollama` is green against a live
+green today: **96 assertions passing, 5 marked TODO** against four real
+defects (§6); a fifth is found only by the `expect` layer. `just test-ollama` is green against a live
 `qwen2.5-coder:7b` (31 assertions), and `just test-tgz` qualifies a
 tarball in a sandbox without touching `~/.vim`.
 
@@ -104,6 +104,8 @@ the prompt:
 | `!apierror <msg>` | HTTP 200 carrying an `error` object |
 | `!badjson` | HTTP 200 carrying non‑JSON |
 | `!slow <secs>` | sleep, for timeout tests |
+| `!reasoning` | a thinking model's shape: `reasoning_content` full, `content` empty |
+| `!reasoning-only` | `reasoning_content` full, no `content` key at all |
 
 `!count` and `!dump` are the important ones: they turn "did the reply
 look right" into **"exactly what went over the wire"**. `!count` is how
@@ -203,102 +205,26 @@ figures from `mac-analysis.md`; retune for a slower model.
 
 ## 6. What testing has already found
 
-Four defects are reproduced and maintained in
+Five defects are reproduced and maintained in
 [`vimgem-issues.md`](vimgem-issues.md), including severity, evidence,
 suggested fixes, and upstream status. Reproduce them with
 `just test-one 090-known-issues` and `just test-interactive`.
 
-### Issue 1 — chat session IDs collide, silently destroying history
+| | Severity | Found by |
+|---|---|---|
+| 1. Chat session IDs collide, silently destroying history | high — data loss | mock suite |
+| 2. `:AIQuery` truncation warning is transient | medium | mock suite |
+| 3. Hit-enter prompts interrupt normal use | low | `expect` only |
+| 4. A config value cannot be cleared at runtime | low | mock suite |
+| 5. Reasoning models' output is discarded | medium | mock suite |
 
-**Severity: high — silent data loss.**
+Issue 3 is the one the headless suite structurally cannot see, and the
+reason the `expect` layer exists. Issue 2 is invisible to it for the same
+reason -- `-es` suppresses `:echo` -- so it is asserted as a TODO rather
+than directly.
 
-`autoload/ai/buffer.vim` `CreateChat()`:
-
-```vim
-var chat_id = strftime('%Y%m%d-%H%M%S')
-```
-
-One‑second resolution, no uniqueness check. `CreateChat` then calls
-`SaveHistory(chat_id, [])`.
-
-Open two chats within the same second — press `\c` twice, or `:AIChat`
-right after closing one — and both get the same ID. The second call
-**resets the first session's `.json` history to `[]`**. The `.md`
-transcript still shows the earlier turn, so nothing looks wrong; but the
-API‑facing context is gone and the model has silently forgotten the
-conversation. Both buffers now write to one file.
-
-Verified directly:
-
-```
-session1 id=20260830-092850
-session2 id=20260830-092850
-COLLISION=YES
-files: ['chat-20260830-092850.html', '.json', '.md']   # one session, not two
---- json history of session1 after session2 opened: ---
-[]
-```
-
-It also bit the test suite from the inside: `070-references` opened a
-"new" chat that turned out to be the *previous* chat's file, still
-holding an unsent line, so the new chat failed on the old chat's text.
-
-*Suggested fix:* if the path exists, append `-1`, `-2`, … or use a
-higher‑resolution ID.
-
-### Issue 2 — `:AIQuery` truncation warning is transient and unrecoverable
-
-**Severity: medium — a cut‑off answer is indistinguishable from a
-complete one.**
-
-`autoload/ai/core.vim` (~line 157) announces truncation with a bare
-`:echo`. It leaves no trace in the output buffer and is gone on the next
-keystroke. The write‑target path already does this properly — `core.vim`
-~line 284 inlines a `[Warning: Response was truncated before completion…]`
-line into the output. `:AIQuery` should do the same.
-
-Secondary effect: because `-es` is silent mode, the warning is also
-invisible to automation, which is why `030-query` can only mark it TODO
-rather than assert it.
-
-### Issue 3 — hit‑enter prompts interrupt normal use
-
-**Severity: low — friction, found only by `expect`.**
-
-On a real 80×24 terminal, `:AIChat`, `:AIChatSend` and `:AIInfo` each
-echo a message long enough to overflow the command line, so Vim draws
-`Press ENTER or type command to continue` and waits. Every one costs an
-extra keystroke and momentarily hides the buffer just opened.
-
-This is exactly the class of bug batch mode cannot see, and it is the
-strongest argument for keeping the `expect` layer.
-
-*Suggested fix:* shorten the messages, use `:echomsg` (recallable via
-`:messages` rather than blocking), or `:silent` them and let the buffer
-speak for itself.
-
-### Issue 4 — a config value cannot be cleared once set
-
-**Severity: low — but it makes single-model local servers awkward.**
-
-`:AISet <key>` with no value only *reports* the current value; there is
-no documented or working way to set a key back to empty at runtime.
-Verified: after `:AIModel some-model-name`, running `:AISet openai_model`
-leaves it at `some-model-name`.
-
-This matters because `g:openai_model` **being empty is a meaningful
-state** — it is what makes vimgem omit the `model` field entirely, which
-is the correct request shape for `llama-server`, `mlx_lm.server` and
-other single-model backends. So once you have pointed Vim at ollama (which
-requires a model name) you cannot get back to the correct shape for
-llama.cpp without restarting Vim.
-
-In practice llama.cpp tolerates a stale name, but a stricter server may
-try to fetch it — precisely the failure `openai.vim` omits the field to
-avoid.
-
-*Suggested fix:* let `:AISet <key> ""` (or an explicit `:AIUnset`) clear a
-value.
+Full write-ups, including the verified reproductions, are in
+[`vimgem-issues.md`](vimgem-issues.md); this file does not duplicate them.
 
 ---
 

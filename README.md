@@ -45,76 +45,68 @@ section of `mac-analysis.md` says what carries over and what will differ.
 
 ## Demos
 
-Five recordings, each in two forms:
+Five recordings against real local backends, about 112 seconds in total.
+Dead air is trimmed automatically — see
+[`scripts/render-videos.sh`](scripts/render-videos.sh).
 
-* **`videos/*.webm`** — the deliverable. Scrubbable, pausable, and they
-  **end** rather than loop. GitHub will not play these inline, so click
-  through to view or download one.
-* **`gifs/*.gif`** — the same takes, embedded below. These are built
-  **without** the GIF loop extension, so each plays through once and
-  stops on its last frame. Collapse and re-expand a section to replay it,
-  or open the `.webm` if you want to scrub.
+Each GIF below is built **without** the loop extension, so it plays
+through once and stops on its last frame rather than cycling forever.
+Alongside each is a `.webm` — that's the form to open when you want to
+pause, scrub, or replay (GitHub won't play those inline).
 
-Total: about 112 seconds across all five. Dead air is trimmed
-automatically — see [`scripts/render-videos.sh`](scripts/render-videos.sh).
+### 01 · Install
 
-<details>
-<summary><b>01 · Install</b> — unpacking the <code>.tgz</code>, requirements, <code>helptags</code>, first <code>:AIInfo</code> (35s)</summary>
-
+Unpacking the `.tgz`, checking requirements, `helptags`, first `:AIInfo`.
 Installs into a throwaway vimdir, never the viewer's real `~/.vim`.
 
 ![Installing vimgem from the distribution tarball](gifs/01-install.gif)
 
-[`videos/01-install.webm`](videos/01-install.webm)
-</details>
+▶ [`videos/01-install.webm`](videos/01-install.webm) · 35s
 
-<details>
-<summary><b>02 · Configure</b> — providers, <code>:AIUrl</code>, and the <code>:AISet</code> literal-value trap (12s)</summary>
+### 02 · Configure
 
 `gemini`, `claude`, and `openai` — where `openai` means *any*
-OpenAI-compatible server, local ones included.
+OpenAI-compatible server, local ones included. Also the `:AISet`
+literal-value trap: never quote the value.
 
 ![Configuring vimgem for a local model server](gifs/02-configure.gif)
 
-[`videos/02-configure.webm`](videos/02-configure.webm)
-</details>
+▶ [`videos/02-configure.webm`](videos/02-configure.webm) · 12s
 
-<details>
-<summary><b>03 · Models</b> — <code>just models</code>, <code>:AIModels</code> local and remote, cursor-select (18s)</summary>
+### 03 · Models
 
-Listing models from the shell and from inside Vim, then switching by
-putting the cursor on a model line and running `:AIModel`.
+Listing models from the shell (`just models`) and from inside Vim
+(`:AIModels`), local and remote, then switching by putting the cursor on
+a model line and running `:AIModel`.
 
 ![Listing models and switching between them](gifs/03-models.gif)
 
-[`videos/03-models.webm`](videos/03-models.webm)
-</details>
+▶ [`videos/03-models.webm`](videos/03-models.webm) · 18s
 
-<details>
-<summary><b>04 · Providers</b> — three backends: local ollama, local llama.cpp, remote ollama (21s)</summary>
+### 04 · Providers
 
-The point of this one: every local server is the *same* vimgem provider
-(`openai`). Switching backend is a base-URL change and nothing else —
-including to another machine on the LAN.
+Three backends — local ollama, local llama.cpp, and ollama on another
+machine on the LAN. The point: every local server is the *same* vimgem
+provider (`openai`), so switching backend is a base-URL change and
+nothing else.
 
 ![Switching between local and remote backends](gifs/04-providers.gif)
 
-[`videos/04-providers.webm`](videos/04-providers.webm)
-</details>
+▶ [`videos/04-providers.webm`](videos/04-providers.webm) · 21s
 
-<details>
-<summary><b>05 · Chat</b> — <code>:AIQuery</code>, then <code>\c</code> / <code>\s</code> multi-turn chat (25s)</summary>
+### 05 · Chat
 
-A one-shot query, then a persistent multi-turn conversation against a
-real local model.
+A one-shot `:AIQuery`, then a persistent multi-turn conversation driven
+by the `\c` and `\s` mappings.
 
 ![A one-shot query and a multi-turn chat](gifs/05-chat.gif)
 
-[`videos/05-chat.webm`](videos/05-chat.webm)
-</details>
+▶ [`videos/05-chat.webm`](videos/05-chat.webm) · 25s
 
-Re-record everything with `just videos`, or one with `just video 03-models`
-(needs `just install-tools` first).
+---
+
+Re-record everything with `just videos`, or one with
+`just video 03-models` (needs `just install-tools` first).
 
 ## Layout
 

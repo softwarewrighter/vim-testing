@@ -1,0 +1,12 @@
+# The plugin under test. It ships as a tarball from its author and is
+# deliberately NOT vendored here -- this repo is the testing work only.
+subject/
+
+# Per-run test artifacts: TAP output, logs, isolated chat homes, and the
+# raw pre-trim recordings.
+out/
+
+# Editor and OS noise
+*.swp
+*.swo
+.DS_Store

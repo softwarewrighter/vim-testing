@@ -1,0 +1,119 @@
+#!/usr/bin/env expect
+# scripts/interactive.exp
+#
+# The thin layer of tests that headless `vim -es` genuinely CANNOT do.
+#
+# Batch mode covers correctness: commands, config, providers, chat
+# lifecycle, references, error paths -- all of it, faster and with real
+# assertions. What it cannot see, because there is no terminal:
+#
+#   * key MAPPINGS as keystrokes. `\c` -> :AIChat is a mapping, and
+#     :AIChat working says nothing about whether the mapping fires.
+#   * anything that PROMPTS. In -es mode a prompt silently blocks on
+#     stdin; on a real TTY it draws and waits. "Press ENTER", the
+#     :AIReviewReceived confirmation, swap-file prompts.
+#   * :echo / echohl output. -es is silent mode: warnings such as the
+#     truncation notice are suppressed and never reach :redir at all
+#     (this is why 030-query marks that assertion TODO).
+#   * screen RENDERING: aimd syntax highlighting, window splits, whether
+#     a long reply leaves the user staring at a pager.
+#
+# So expect is not a replacement for the batch suite -- it is the
+# ~10% of coverage the batch suite structurally cannot reach.
+#
+# Usage: VIMGEM_CHAT_HOME=<scratch> ./interactive.exp <base_url>
+
+set timeout 20
+set base_url [expr {$argc > 0 ? [lindex $argv 0] : "http://127.0.0.1:9099"}]
+set testing_dir [file dirname [file dirname [file normalize $argv0]]]
+
+set failures 0
+set count 0
+
+proc ok {name cond} {
+    global failures count
+    incr count
+    if {$cond} {
+        puts "\nok $count - $name"
+    } else {
+        incr failures
+        puts "\nnot ok $count - $name"
+    }
+}
+
+# Same TODO convention as the batch harness: a known, filed defect is
+# reported but does not redden the run.
+proc todo {name cond why} {
+    global count
+    incr count
+    puts "\n[expr {$cond ? {ok} : {not ok}}] $count - $name # TODO $why"
+}
+
+# A real 80x24 PTY, not a pipe.
+set env(LINES) 24
+set env(COLUMNS) 80
+set env(TERM) xterm-256color
+
+spawn vim -N -i NONE -u $testing_dir/vim/testrc.vim
+
+# Vim must reach a usable screen rather than sitting on a prompt.
+expect {
+    -re {Press ENTER|more\?} { ok "vim starts without a prompt" 0 }
+    timeout                  { ok "vim starts without a prompt" 0 }
+    -re {.+}                 { ok "vim starts without a prompt" 1 }
+}
+
+# --- configure through the real command line ---------------------------
+send ":AIProvider openai\r"
+send ":AIUrl $base_url\r"
+send ":AIPrompt off\r"
+
+# --- the \\c mapping must actually open a chat -------------------------
+# This is the assertion that justifies expect existing: it exercises the
+# mapping, not the command.
+send "\\c"
+set got 0
+expect {
+    -re {AI Chat} { set got 1 }
+    timeout       { set got 0 }
+}
+ok "the \\\\c mapping opens a chat buffer" $got
+
+# --- type a question and send it with the \\s mapping ------------------
+send "GA!echo INTERACTIVE-REPLY\033"
+send "\\s"
+set got 0
+expect {
+    -re {INTERACTIVE-REPLY} { set got 1 }
+    timeout                 { set got 0 }
+}
+ok "the \\\\s mapping sends the turn and the reply renders on screen" $got
+
+# --- ISSUE 3: hit-enter prompts on a real terminal ---------------------
+# Found by this script, and invisible to the batch suite by construction.
+# Several vimgem commands echo a message long enough to overflow the
+# single-line command area, which makes Vim draw
+#   "Press ENTER or type command to continue"
+# and wait. Confirmed after :AIChat, after :AIChatSend, and after
+# :AIInfo. Each one costs the user an extra keystroke and, mid-flow,
+# hides the buffer they were just looking at.
+#
+# Likely fixes, in the plugin: shorten the messages, use :echomsg (which
+# is recallable via :messages rather than blocking), or wrap them in
+# :silent and leave the detail to the buffer that was just opened.
+send ":AIInfo\r"
+set sawprompt 0
+expect {
+    -re {Press ENTER|-- More --} { set sawprompt 1; exp_continue }
+    -re {Current Provider}       { }
+    timeout                      { }
+}
+todo ":AIInfo renders without a hit-enter prompt" [expr {!$sawprompt}] \
+     "long :echo messages overflow the command line and force Press-ENTER"
+
+# --- quit cleanly ------------------------------------------------------
+send ":qall!\r"
+expect eof
+
+puts "1..$count"
+exit [expr {$failures > 0 ? 1 : 0}]

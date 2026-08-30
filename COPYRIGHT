@@ -1,0 +1,12 @@
+Copyright (c) 2026 Michael A Wright
+
+This repository contains the test harness, backend tooling, benchmarks,
+documentation and demo recordings for vimgem. All of that work is
+copyright Michael A Wright and licensed under the MIT License; see the
+LICENSE file for the full text.
+
+The vimgem plugin itself is a separate work by Russ Tremain, distributed
+independently as a source tarball. It is NOT included in this repository
+and is NOT covered by this copyright or license. The `subject/` directory
+is where a copy is placed for testing, and is excluded from version
+control for that reason.
